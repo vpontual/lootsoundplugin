@@ -1,0 +1,11 @@
+## Interface: 110002, 110005
+## Title: LootSoundPlugin
+## Notes: It's not junk, it's treasure!
+## Author: VeePee
+## Version: 1.0
+## DefaultState: Enabled
+
+## AddOn files ##
+sounds/treasure.ogg
+
+LootSoundPlugin.lua
