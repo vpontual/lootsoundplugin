@@ -1,16 +1,16 @@
 local addonName, addon = ...
 addon.version = "1.0"
 
-local TREASURE_SOUND_PATH = "Interface\\AddOns\\LootSoundPlugin\\sounds\\treasure.ogg"
-local WOW_SOUND_PATH = "Interface\\AddOns\\LootSoundPlugin\\sounds\\wow.ogg"
-local JUNK_SOUND_PATH = "Interface\\AddOns\\LootSoundPlugin\\sounds\\junk.ogg"
+local TREASURE_SOUND_PATH = "Interface\\AddOns\\lootsoundplugin-main\\sounds\\treasure.ogg"
+local WOW_SOUND_PATH = "Interface\\AddOns\\lootsoundplugin-main\\sounds\\wow.ogg"
+local JUNK_SOUND_PATH = "Interface\\AddOns\\lootsoundplugin-main\\sounds\\junk.ogg"
 local VENDOR_SOUND_PATHS = {
-    "Interface\\AddOns\\LootSoundPlugin\\sounds\\bringbackmoreshinythings.ogg",
-    "Interface\\AddOns\\LootSoundPlugin\\sounds\\ifindmorestuff.ogg",
-    "Interface\\AddOns\\LootSoundPlugin\\sounds\\noaskwhereigotit.ogg",
-    "Interface\\AddOns\\LootSoundPlugin\\sounds\\quitpoking.ogg",
-    "Interface\\AddOns\\LootSoundPlugin\\sounds\\someonepicky.ogg",
-    "Interface\\AddOns\\LootSoundPlugin\\sounds\\uneedigot.ogg"
+    "Interface\\AddOns\\lootsoundplugin-main\\sounds\\bringbackmoreshinythings.ogg",
+    "Interface\\AddOns\\lootsoundplugin-main\\sounds\\ifindmorestuff.ogg",
+    "Interface\\AddOns\\lootsoundplugin-main\\sounds\\noaskwhereigotit.ogg",
+    "Interface\\AddOns\\lootsoundplugin-main\\sounds\\quitpoking.ogg",
+    "Interface\\AddOns\\lootsoundplugin-main\\sounds\\someonepicky.ogg",
+    "Interface\\AddOns\\lootsoundplugin-main\\sounds\\uneedigot.ogg"
 }
 
 local SOUND_CHANNEL = "Master"
