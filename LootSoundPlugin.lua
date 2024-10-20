@@ -1,14 +1,14 @@
 local addonName, addon = ...
-addon.version = "1.0"
+addon.version = "1.1"
 
 local TREASURE_SOUND_PATH = "Interface\\AddOns\\lootsoundplugin-main\\sounds\\treasure.ogg"
 local WOW_SOUND_PATH = "Interface\\AddOns\\lootsoundplugin-main\\sounds\\wow.ogg"
--- local JUNK_SOUND_PATH = "Interface\\AddOns\\lootsoundplugin-main\\sounds\\junk.ogg"
+local JUNK_SOUND_PATH = "Interface\\AddOns\\lootsoundplugin-main\\sounds\\junk.ogg"
+local TRADE_SOUND_PATH = "Interface\\AddOns\\lootsoundplugin-main\\sounds\\quitpoking.ogg"
 local VENDOR_SOUND_PATHS = {
     "Interface\\AddOns\\lootsoundplugin-main\\sounds\\bringbackmoreshinythings.ogg",
     "Interface\\AddOns\\lootsoundplugin-main\\sounds\\ifindmorestuff.ogg",
     "Interface\\AddOns\\lootsoundplugin-main\\sounds\\noaskwhereigotit.ogg",
-    "Interface\\AddOns\\lootsoundplugin-main\\sounds\\quitpoking.ogg",
     "Interface\\AddOns\\lootsoundplugin-main\\sounds\\someonepicky.ogg",
     "Interface\\AddOns\\lootsoundplugin-main\\sounds\\uneedigot.ogg"
 }
@@ -20,6 +20,7 @@ local LOOT_SOUND = TREASURE_SOUND_PATH  -- Default loot sound
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("LOOT_OPENED")
 frame:RegisterEvent("MERCHANT_SHOW")
+frame:RegisterEvent("TRADE_SHOW")
 
 local function PlaySound(soundPath)
     PlaySoundFile(soundPath, SOUND_CHANNEL, false, false, SOUND_VOLUME)
@@ -28,6 +29,10 @@ end
 local function PlayRandomVendorSound()
     local randomIndex = math.random(1, #VENDOR_SOUND_PATHS)
     PlaySound(VENDOR_SOUND_PATHS[randomIndex])
+end
+
+local function PlayTradeSound()
+    PlaySound(TRADE_SOUND_PATH)
 end
 
 local totalSold = 0
@@ -45,6 +50,13 @@ frame:SetScript("OnEvent", function(self, event, ...)
             PlaySound(JUNK_SOUND_PATH)
         end
         totalSold = newTotal
+    elseif event == "TRADE_SHOW" then
+        if C_TradeInfo then
+            local target = C_TradeInfo.GetTradeTargetToken()
+            if target then
+                C_ChatInfo.SendAddonMessage("LootSoundPlugin", "PLAY_TRADE_SOUND", "WHISPER", target)
+            end
+        end
     end
 end)
 
@@ -96,5 +108,17 @@ merchantFrame:RegisterEvent("MERCHANT_CLOSED")
 merchantFrame:SetScript("OnEvent", function(self, event)
     if event == "MERCHANT_CLOSED" then
         frame:UnregisterEvent("BAG_UPDATE_DELAYED")
+    end
+end)
+
+-- Register addon message prefix
+C_ChatInfo.RegisterAddonMessagePrefix("LootSoundPlugin")
+
+-- Create a frame to listen for addon messages
+local messageFrame = CreateFrame("Frame")
+messageFrame:RegisterEvent("CHAT_MSG_ADDON")
+messageFrame:SetScript("OnEvent", function(self, event, prefix, message, channel, sender)
+    if event == "CHAT_MSG_ADDON" and prefix == "LootSoundPlugin" and message == "PLAY_TRADE_SOUND" then
+        PlayTradeSound()
     end
 end)
