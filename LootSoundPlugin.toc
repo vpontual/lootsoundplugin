@@ -5,7 +5,4 @@
 ## Version: 1.0
 ## DefaultState: Enabled
 
-## AddOn files ##
-sounds/treasure.ogg
-
 LootSoundPlugin.lua
