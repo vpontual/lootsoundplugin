@@ -4,7 +4,7 @@ local addonVersion = "1.0"
 function LootSoundPlugin:OnLoad()
     self.name = addonName
     self.version = addonVersion
-    self.soundFile = ./sounds/treasure.mp3
+    self.soundFile = "sounds/treasure.mp3"
 
     -- Registering the event handler for loot pickup
     self:RegisterEvent("LOOT_PICKED_UP")
