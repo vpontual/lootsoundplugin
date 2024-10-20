@@ -1,4 +1,4 @@
-## Interface: 110002, 110005
+## Interface: 100200
 ## Title: LootSoundPlugin
 ## Notes: It's not junk, it's treasure!
 ## Author: VeePee
