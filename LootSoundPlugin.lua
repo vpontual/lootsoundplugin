@@ -3,7 +3,7 @@ addon.version = "1.0"
 
 local TREASURE_SOUND_PATH = "Interface\\AddOns\\lootsoundplugin-main\\sounds\\treasure.ogg"
 local WOW_SOUND_PATH = "Interface\\AddOns\\lootsoundplugin-main\\sounds\\wow.ogg"
-local JUNK_SOUND_PATH = "Interface\\AddOns\\lootsoundplugin-main\\sounds\\junk.ogg"
+-- local JUNK_SOUND_PATH = "Interface\\AddOns\\lootsoundplugin-main\\sounds\\junk.ogg"
 local VENDOR_SOUND_PATHS = {
     "Interface\\AddOns\\lootsoundplugin-main\\sounds\\bringbackmoreshinythings.ogg",
     "Interface\\AddOns\\lootsoundplugin-main\\sounds\\ifindmorestuff.ogg",
