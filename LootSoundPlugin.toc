@@ -1,8 +1,9 @@
-## Interface: 100200
+## Interface: 110005
 ## Title: LootSoundPlugin
 ## Notes: It's not junk, it's treasure!
 ## Author: VeePee
-## Version: 1.0
+## Version: 1.1.3
 ## DefaultState: Enabled
+## SavedVariables: LootSoundDB
 
 LootSoundPlugin.lua
