@@ -1,65 +1,272 @@
-# LootSound Addon v1.3 - Release Notes
+local addonName, addon = ...
+addon.version = "1.1.3"
 
-## Major Updates
-1. Complete Code Restructure
-   - Improved organization with separate modules for configuration, state management, and utilities
-   - Better error handling and validation throughout
-   - More efficient event handling
-   - Improved performance and reliability
+-- Configuration
+local Config = {
+    SOUND_PATHS = {
+        TREASURE = "Interface\\AddOns\\lootsoundplugin\\sounds\\treasure.ogg",
+        WOW = "Interface\\AddOns\\lootsoundplugin\\sounds\\wow.ogg",
+        TRADE = "Interface\\AddOns\\lootsoundplugin\\sounds\\quitpoking.ogg",
+        VENDOR = {
+            "Interface\\AddOns\\lootsoundplugin\\sounds\\bringbackmoreshinythings.ogg",
+            "Interface\\AddOns\\lootsoundplugin\\sounds\\ifindmorestuff.ogg",
+            "Interface\\AddOns\\lootsoundplugin\\sounds\\noaskwhereigotit.ogg",
+            "Interface\\AddOns\\lootsoundplugin\\sounds\\someonepicky.ogg",
+            "Interface\\AddOns\\lootsoundplugin\\sounds\\uneedigot.ogg"
+        }
+    },
+    DEFAULTS = {
+        SOUND_CHANNEL = "Master",
+        SOUND_VOLUME = 0.7,
+        LOOT_SOUND = "TREASURE"
+    }
+}
 
-2. New Individual Sound Controls
-   - Separate toggles for each sound type:
-     * Loot sounds
-     * Vendor sounds
-     * Trade sounds
-   - Main addon toggle remains as master control
-   - Each sound type can be enabled/disabled independently
+-- State management
+local State = {
+    currentVolume = Config.DEFAULTS.SOUND_VOLUME,
+    currentLootSound = Config.DEFAULTS.LOOT_SOUND,
+    currentChannel = Config.DEFAULTS.SOUND_CHANNEL,
+    totalSold = 0,
+    isEnabled = true,
+    sounds = {
+        loot = true,
+        vendor = true,
+        trade = true
+    }
+}
 
-3. Enhanced User Interface
-   - Color-coded status messages
-   - Improved error reporting
-   - Better feedback for all commands
-   - Comprehensive status display
+-- Utility functions
+local Utils = {
+    validateSoundFile = function(path)
+        if not path then 
+            print("|cFFFF0000[LootSound Debug]|r Sound path is nil")
+            return false 
+        end
+        if type(path) ~= "string" then
+            print("|cFFFF0000[LootSound Debug]|r Sound path is not a string:", type(path))
+            return false
+        end
+        if not path:match("%.ogg$") then
+            print("|cFFFF0000[LootSound Debug]|r Sound file is not .ogg:", path)
+            return false
+        end
+        return true
+    end,
+    
+    printMessage = function(msg, isError)
+        local prefix = isError and "|cFFFF0000[LootSound]|r " or "|cFF00FF00[LootSound]|r "
+        print(prefix .. msg)
+    end,
+    
+    validateVolume = function(volume)
+        if type(volume) ~= "number" then return false end
+        return volume >= 0 and volume <= 1
+    end,
 
-## New Commands
-- `/lootsound loot` - Toggle loot sounds
-- `/lootsound vendor` - Toggle vendor sounds
-- `/lootsound trade` - Toggle trade sounds
-- `/lootsound status` - Show all current settings
-- `/lootsound help` - Display all available commands
+    getToggleState = function(state)
+        return state and "|cFF00FF00enabled|r" or "|cFFFF0000disabled|r"
+    end,
 
-## Existing Features
-- Volume control: `/lootsound volume <0.0 to 1.0>`
-- Sound selection: `/lootsound sound <wow|treasure>`
-- Master toggle: `/lootsound toggle`
+    debugPrint = function(...)
+        print("|cFFFFFF00[LootSound Debug]|r", ...)
+    end
+}
 
-## Technical Improvements
-- Better input validation for all commands
-- Protected sound playback to prevent errors
-- Improved sound file validation
-- Better state management
-- More efficient event handling
+-- Sound handling (reverted to original working implementation)
+local SoundManager = {
+  playRandomVendorSound = function()
+    if not State.sounds.vendor then return end
+    local paths = Config.SOUND_PATHS.VENDOR
+    if #paths == 0 then return end
+    local randomIndex = math.random(1, #paths)
+    PlaySoundFile(paths[randomIndex], State.currentChannel)
+  end,
+    
+  getCurrentLootSound = function()
+    return Config.SOUND_PATHS[State.currentLootSound]
+  end,
 
-## Installation
-1. Copy the addon folder to your WoW Interface/AddOns directory
-2. Restart World of Warcraft if it's running
-3. Make sure the addon is enabled in your addon list
+  testSounds = function()
+    Utils.debugPrint("Starting sound system test...")
+      
+    -- Test each sound with bigger delays to ensure they don't overlap
+    Utils.printMessage("Playing treasure sound...")
+    PlaySoundFile(Config.SOUND_PATHS.TREASURE, State.currentChannel)
+      
+    C_Timer.After(2, function()
+      Utils.printMessage("Playing wow sound...")
+      PlaySoundFile(Config.SOUND_PATHS.WOW, State.currentChannel)
+    end)
+      
+    C_Timer.After(4, function()
+      Utils.printMessage("Playing vendor sound...")
+      SoundManager.playRandomVendorSound()
+    end)
+      
+    C_Timer.After(6, function()
+      Utils.printMessage("Playing trade sound...")
+      PlaySoundFile(Config.SOUND_PATHS.TRADE, State.currentChannel)
+    end)
+  end
+}
 
-## Usage Tips
-- Use `/lootsound status` to see current settings
-- Individual sound toggles let you customize exactly what you want to hear
-- Volume can be adjusted independently of other game sounds
-- Trade sounds require both players to have the addon installed
+-- Event handling
+local EventManager = CreateFrame("Frame")
+EventManager:RegisterEvent("LOOT_OPENED")
+EventManager:RegisterEvent("MERCHANT_SHOW")
+EventManager:RegisterEvent("MERCHANT_CLOSED")
+EventManager:RegisterEvent("TRADE_SHOW")
+EventManager:RegisterEvent("PLAYER_LOGIN")
 
-## Known Limitations
-- Trade sounds only work when both players have the addon
-- Sound files must be .ogg format
-- Volume setting is separate from WoW's master volume
+EventManager:SetScript("OnEvent", function(self, event, ...)
+  Utils.debugPrint("Event fired:", event)
+    
+  if not State.isEnabled then 
+    Utils.debugPrint("Addon disabled, ignoring event")
+    return 
+  end
+    
+  if event == "PLAYER_LOGIN" then
+    Utils.printMessage("Addon loaded! Type /lootsound help for commands.")
+  elseif event == "LOOT_OPENED" then
+    -- Check if sounds are enabled and loot sound is toggled on
+    if State.isEnabled and State.sounds.loot then
+      PlaySoundFile(SoundManager.getCurrentLootSound(), State.currentChannel)
+    end
+  elseif event == "MERCHANT_SHOW" then
+    -- Check if sounds are enabled and vendor sound is toggled on
+    if State.isEnabled and State.sounds.vendor then
+      SoundManager.playRandomVendorSound()
+    end
+    State.totalSold = GetMoney()
+    self:RegisterEvent("BAG_UPDATE_DELAYED")
+  elseif event == "MERCHANT_CLOSED" then
+    self:UnregisterEvent("BAG_UPDATE_DELAYED")
+  elseif event == "TRADE_SHOW" then
+    if State.isEnabled and State.sounds.trade and C_TradeInfo then
+      local target = C_TradeInfo.GetTradeTargetToken()
+      if target then
+        C_ChatInfo.SendAddonMessage("LootSoundPlugin", "PLAY_TRADE_SOUND", "WHISPER", target)
+      end
+    end
+  end
+end)
 
-## Compatibility
-- Tested with current retail version of World of Warcraft
-- Should work with most UI addons
-- No known conflicts with other addons
+-- Addon API
+function addon:SetVolume(volume)
+    if not Utils.validateVolume(volume) then
+        Utils.printMessage("Invalid volume value. Please use a number between 0 and 1.", true)
+        return
+    end
+    State.currentVolume = volume
+    Utils.printMessage(string.format("Volume set to %.2f", volume))
+end
 
-## Feedback and Support
-If you encounter any issues or have suggestions, please report them at [your preferred contact method/repository].
+function addon:SetChannel(channel)
+    channel = string.upper(channel)
+    if channel ~= "MASTER" and channel ~= "SFX" then
+        Utils.printMessage("Invalid channel. Use 'master' or 'sfx'.", true)
+        return
+    end
+    State.currentChannel = channel
+    Utils.printMessage("Sound channel set to " .. channel)
+end
+
+function addon:SetLootSound(soundType)
+    soundType = string.upper(soundType)
+    if not Config.SOUND_PATHS[soundType] then
+        Utils.printMessage("Invalid sound type. Use 'wow' or 'treasure'.", true)
+        return
+    end
+    State.currentLootSound = soundType
+    Utils.printMessage("Loot sound set to " .. soundType)
+end
+
+function addon:ToggleAddon(enabled)
+    State.isEnabled = enabled
+    Utils.printMessage(enabled and "Addon enabled" or "Addon disabled")
+end
+
+function addon:ToggleSound(soundType)
+    soundType = string.lower(soundType)
+    
+    Utils.debugPrint("Attempting to toggle:", soundType)
+    Utils.debugPrint("Current state:", State.sounds[soundType])
+    
+    if not State.sounds[soundType] and State.sounds[soundType] ~= false then
+        Utils.printMessage("Invalid sound type. Use 'loot', 'vendor', or 'trade'.", true)
+        return
+    end
+    
+    State.sounds[soundType] = not State.sounds[soundType]
+    
+    Utils.debugPrint("New state:", State.sounds[soundType])
+    
+    Utils.printMessage(string.format("%s sounds %s", 
+        soundType:gsub("^%l", string.upper),
+        Utils.getToggleState(State.sounds[soundType])
+    ))
+end
+
+-- Slash commands
+local function HandleSlashCommands(msg)
+    local args = {}
+    for arg in msg:gmatch("%S+") do
+        table.insert(args, string.lower(arg))
+    end
+    
+    if #args == 0 or args[1] == "help" then
+        Utils.printMessage("Available commands:")
+        Utils.printMessage("/lootsound volume <0.0 to 1.0> - Set sound volume")
+        Utils.printMessage("/lootsound channel <master|sfx> - Set sound channel")
+        Utils.printMessage("/lootsound sound <wow|treasure> - Set loot sound")
+        Utils.printMessage("/lootsound toggle - Enable/disable all sounds")
+        Utils.printMessage("/lootsound loot - Toggle loot sounds")
+        Utils.printMessage("/lootsound vendor - Toggle vendor sounds")
+        Utils.printMessage("/lootsound trade - Toggle trade sounds")
+        Utils.printMessage("/lootsound test - Test all sounds")
+        Utils.printMessage("/lootsound status - Show current settings")
+        return
+    end
+    
+    if args[1] == "volume" and args[2] then
+        addon:SetVolume(tonumber(args[2]))
+    elseif args[1] == "channel" and args[2] then
+        addon:SetChannel(args[2])
+    elseif args[1] == "sound" and args[2] then
+        addon:SetLootSound(args[2])
+    elseif args[1] == "toggle" then
+        addon:ToggleAddon(not State.isEnabled)
+    elseif args[1] == "test" then
+        Utils.printMessage("Testing all sounds...")
+        SoundManager.testSounds()
+    elseif args[1] == "loot" or args[1] == "vendor" or args[1] == "trade" then
+        addon:ToggleSound(args[1])
+    elseif args[1] == "status" then
+        Utils.printMessage(string.format("Addon: %s", Utils.getToggleState(State.isEnabled)))
+        Utils.printMessage(string.format("Volume: %.2f", State.currentVolume))
+        Utils.printMessage(string.format("Channel: %s", State.currentChannel))
+        Utils.printMessage(string.format("Sound: %s", State.currentLootSound))
+        Utils.printMessage(string.format("Loot sounds: %s", Utils.getToggleState(State.sounds.loot)))
+        Utils.printMessage(string.format("Vendor sounds: %s", Utils.getToggleState(State.sounds.vendor)))
+        Utils.printMessage(string.format("Trade sounds: %s", Utils.getToggleState(State.sounds.trade)))
+    else
+        Utils.printMessage("Unknown command. Type /lootsound help for usage.", true)
+    end
+end
+
+SLASH_LOOTSOUND1 = "/lootsound"
+SlashCmdList["LOOTSOUND"] = HandleSlashCommands
+
+-- Register addon message handling
+C_ChatInfo.RegisterAddonMessagePrefix("LootSoundPlugin")
+
+local messageFrame = CreateFrame("Frame")
+messageFrame:RegisterEvent("CHAT_MSG_ADDON")
+messageFrame:SetScript("OnEvent", function(self, event, prefix, message, channel, sender)
+    if event == "CHAT_MSG_ADDON" and prefix == "LootSoundPlugin" and message == "PLAY_TRADE_SOUND" then
+        Utils.debugPrint("Received trade sound request from:", sender)
+        SoundManager.playSound(Config.SOUND_PATHS.TRADE, "trade")
+    end
+end)
