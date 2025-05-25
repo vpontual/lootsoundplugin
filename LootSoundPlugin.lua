@@ -19,6 +19,7 @@ local Config = {
         SOUND_CHANNEL = "Master",
         SOUND_VOLUME = 0.7,
         LOOT_SOUND = "TREASURE"
+        DEBUG_MODE =  false
     }
 }
 
@@ -69,46 +70,46 @@ local Utils = {
     end,
 
     debugPrint = function(...)
+        if not State.isDebug then return end -- If debug mode is off, do nothing.
         print("|cFFFFFF00[LootSound Debug]|r", ...)
     end
 }
 
--- Sound handling (reverted to original working implementation)
+-- Sound handling
 local SoundManager = {
-  playRandomVendorSound = function()
-    if not State.sounds.vendor then return end
-    local paths = Config.SOUND_PATHS.VENDOR
-    if #paths == 0 then return end
-    local randomIndex = math.random(1, #paths)
-    PlaySoundFile(paths[randomIndex], State.currentChannel)
-  end,
+    playRandomVendorSound = function()
+        if not State.sounds.vendor then return end
+        local paths = Config.SOUND_PATHS.VENDOR
+        if #paths == 0 then return end
+        local randomIndex = math.random(1, #paths)
+        PlaySoundFileWithVolume(paths[randomIndex], State.currentChannel, State.currentVolume)
+    end,
     
-  getCurrentLootSound = function()
-    return Config.SOUND_PATHS[State.currentLootSound]
-  end,
+    getCurrentLootSound = function()
+        return Config.SOUND_PATHS[State.currentLootSound]
+    end,
 
-  testSounds = function()
-    Utils.debugPrint("Starting sound system test...")
-      
-    -- Test each sound with bigger delays to ensure they don't overlap
-    Utils.printMessage("Playing treasure sound...")
-    PlaySoundFile(Config.SOUND_PATHS.TREASURE, State.currentChannel)
-      
-    C_Timer.After(2, function()
-      Utils.printMessage("Playing wow sound...")
-      PlaySoundFile(Config.SOUND_PATHS.WOW, State.currentChannel)
-    end)
-      
-    C_Timer.After(4, function()
-      Utils.printMessage("Playing vendor sound...")
-      SoundManager.playRandomVendorSound()
-    end)
-      
-    C_Timer.After(6, function()
-      Utils.printMessage("Playing trade sound...")
-      PlaySoundFile(Config.SOUND_PATHS.TRADE, State.currentChannel)
-    end)
-  end
+    testSounds = function()
+        Utils.debugPrint("Starting sound system test...")
+        
+        Utils.printMessage("Playing treasure sound...")
+        PlaySoundFileWithVolume(Config.SOUND_PATHS.TREASURE, State.currentChannel, State.currentVolume)
+        
+        C_Timer.After(2, function()
+            Utils.printMessage("Playing wow sound...")
+            PlaySoundFileWithVolume(Config.SOUND_PATHS.WOW, State.currentChannel, State.currentVolume)
+        end)
+        
+        C_Timer.After(4, function()
+            Utils.printMessage("Playing vendor sound...")
+            SoundManager.playRandomVendorSound()
+        end)
+        
+        C_Timer.After(6, function()
+            Utils.printMessage("Playing trade sound...")
+            PlaySoundFileWithVolume(Config.SOUND_PATHS.TRADE, State.currentChannel, State.currentVolume)
+        end)
+    end
 }
 
 -- Event handling
@@ -124,15 +125,34 @@ EventManager:SetScript("OnEvent", function(self, event, ...)
     
   if not State.isEnabled then 
     Utils.debugPrint("Addon disabled, ignoring event")
-    return 
+    return
   end
     
   if event == "PLAYER_LOGIN" then
-    Utils.printMessage("Addon loaded! Type /lootsound help for commands.")
+    -- First-time setup: If LootSoundDB doesn't exist or is empty, populate it.
+    LootSoundDB = LootSoundDB or {}
+    LootSoundDB.volume = LootSoundDB.volume or Config.DEFAULTS.SOUND_VOLUME
+    LootSoundDB.lootSound = LootSoundDB.lootSound or Config.DEFAULTS.LOOT_SOUND
+    LootSoundDB.channel = LootSoundDB.channel or Config.DEFAULTS.SOUND_CHANNEL
+    LootSoundDB.isEnabled = LootSoundDB.isEnabled == nil and true or LootSoundDB.isEnabled
+    LootSoundDB.sounds = LootSoundDB.sounds or { loot = true, vendor = true, trade = true }
+    LootSoundDB.isDebug = LootSoundDB.isDebug == nil and Config.DEFAULTS.DEBUG_MODE or LootSoundDB.isDebug
+
+    -- Now, apply the loaded/default settings to the addon's current state
+    State.currentVolume = LootSoundDB.volume
+    State.currentLootSound = LootSoundDB.lootSound
+    State.currentChannel = LootSoundDB.channel
+    State.isEnabled = LootSoundDB.isEnabled
+    State.sounds = LootSoundDB.sounds
+    State.isDebug = LootSoundDB.isDebug
+
+
+    Utils.printMessage(string.format("Addon v%s loaded! Type /lootsound help for commands.", addon.version))
+    self:UnregisterEvent("PLAYER_LOGIN") -- No need to run this again this session
   elseif event == "LOOT_OPENED" then
     -- Check if sounds are enabled and loot sound is toggled on
     if State.isEnabled and State.sounds.loot then
-      PlaySoundFile(SoundManager.getCurrentLootSound(), State.currentChannel)
+      PlaySoundFileWithVolume(SoundManager.getCurrentLootSound(), State.currentChannel, State.currentVolume)
     end
   elseif event == "MERCHANT_SHOW" then
     -- Check if sounds are enabled and vendor sound is toggled on
@@ -160,6 +180,7 @@ function addon:SetVolume(volume)
         return
     end
     State.currentVolume = volume
+    LootSoundDB.volume = volume
     Utils.printMessage(string.format("Volume set to %.2f", volume))
 end
 
@@ -170,6 +191,7 @@ function addon:SetChannel(channel)
         return
     end
     State.currentChannel = channel
+    LootSoundDB.channel = channel
     Utils.printMessage("Sound channel set to " .. channel)
 end
 
@@ -180,17 +202,19 @@ function addon:SetLootSound(soundType)
         return
     end
     State.currentLootSound = soundType
+    LootSoundDB.lootSound = soundType
     Utils.printMessage("Loot sound set to " .. soundType)
 end
 
 function addon:ToggleAddon(enabled)
     State.isEnabled = enabled
+    LootSoundDB.isEnabled = enabled
     Utils.printMessage(enabled and "Addon enabled" or "Addon disabled")
 end
 
 function addon:ToggleSound(soundType)
     soundType = string.lower(soundType)
-    
+
     Utils.debugPrint("Attempting to toggle:", soundType)
     Utils.debugPrint("Current state:", State.sounds[soundType])
     
@@ -200,6 +224,8 @@ function addon:ToggleSound(soundType)
     end
     
     State.sounds[soundType] = not State.sounds[soundType]
+
+    LootSoundDB.sounds[soundType] = State.sounds[soundType]
     
     Utils.debugPrint("New state:", State.sounds[soundType])
     
@@ -207,6 +233,12 @@ function addon:ToggleSound(soundType)
         soundType:gsub("^%l", string.upper),
         Utils.getToggleState(State.sounds[soundType])
     ))
+end
+
+function addon:ToggleDebug(enabled)
+    State.isDebug = enabled
+    LootSoundDB.isDebug = enabled
+    Utils.printMessage("Debug mode " .. Utils.getToggleState(enabled))
 end
 
 -- Slash commands
@@ -227,6 +259,7 @@ local function HandleSlashCommands(msg)
         Utils.printMessage("/lootsound trade - Toggle trade sounds")
         Utils.printMessage("/lootsound test - Test all sounds")
         Utils.printMessage("/lootsound status - Show current settings")
+        Utils.printMessage("/lootsound debug - Toggles debug messages")
         return
     end
     
@@ -251,6 +284,8 @@ local function HandleSlashCommands(msg)
         Utils.printMessage(string.format("Loot sounds: %s", Utils.getToggleState(State.sounds.loot)))
         Utils.printMessage(string.format("Vendor sounds: %s", Utils.getToggleState(State.sounds.vendor)))
         Utils.printMessage(string.format("Trade sounds: %s", Utils.getToggleState(State.sounds.trade)))
+    elseif args[1] == "debug" then
+        addon:ToggleDebug(not State.isDebug)
     else
         Utils.printMessage("Unknown command. Type /lootsound help for usage.", true)
     end
@@ -267,6 +302,7 @@ messageFrame:RegisterEvent("CHAT_MSG_ADDON")
 messageFrame:SetScript("OnEvent", function(self, event, prefix, message, channel, sender)
     if event == "CHAT_MSG_ADDON" and prefix == "LootSoundPlugin" and message == "PLAY_TRADE_SOUND" then
         Utils.debugPrint("Received trade sound request from:", sender)
-        SoundManager.playSound(Config.SOUND_PATHS.TRADE, "trade")
+        if State.isEnabled and State.sounds.trade then
+            PlaySoundFileWithVolume(Config.SOUND_PATHS.TRADE, State.currentChannel, State.currentVolume)
     end
 end)
