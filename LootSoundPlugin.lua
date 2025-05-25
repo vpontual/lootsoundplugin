@@ -117,7 +117,7 @@ local EventManager = CreateFrame("Frame")
 EventManager:RegisterEvent("LOOT_OPENED")
 EventManager:RegisterEvent("MERCHANT_SHOW")
 EventManager:RegisterEvent("MERCHANT_CLOSED")
-EventManager:RegisterEvent("TRADE_SHOW")
+EventManager:RegisterEvent("TRADE_ACCEPTED")
 EventManager:RegisterEvent("PLAYER_LOGIN")
 
 EventManager:SetScript("OnEvent", function(self, event, ...)
@@ -163,12 +163,10 @@ EventManager:SetScript("OnEvent", function(self, event, ...)
     self:RegisterEvent("BAG_UPDATE_DELAYED")
   elseif event == "MERCHANT_CLOSED" then
     self:UnregisterEvent("BAG_UPDATE_DELAYED")
-  elseif event == "TRADE_SHOW" then
-    if State.isEnabled and State.sounds.trade and C_TradeInfo then
-      local target = C_TradeInfo.GetTradeTargetToken()
-      if target then
-        C_ChatInfo.SendAddonMessage("LootSoundPlugin", "PLAY_TRADE_SOUND", "WHISPER", target)
-      end
+  elseif event == "TRADE_ACCEPTED" then
+    Utils.debugPrint("Trade accepted!")
+    if State.isEnabled and State.sounds.trade then
+        PlaySoundFileWithVolume(Config.SOUND_PATHS.TRADE, State.currentChannel, State.currentVolume)
     end
   end
 end)
@@ -293,16 +291,3 @@ end
 
 SLASH_LOOTSOUND1 = "/lootsound"
 SlashCmdList["LOOTSOUND"] = HandleSlashCommands
-
--- Register addon message handling
-C_ChatInfo.RegisterAddonMessagePrefix("LootSoundPlugin")
-
-local messageFrame = CreateFrame("Frame")
-messageFrame:RegisterEvent("CHAT_MSG_ADDON")
-messageFrame:SetScript("OnEvent", function(self, event, prefix, message, channel, sender)
-    if event == "CHAT_MSG_ADDON" and prefix == "LootSoundPlugin" and message == "PLAY_TRADE_SOUND" then
-        Utils.debugPrint("Received trade sound request from:", sender)
-        if State.isEnabled and State.sounds.trade then
-            PlaySoundFileWithVolume(Config.SOUND_PATHS.TRADE, State.currentChannel, State.currentVolume)
-    end
-end)
