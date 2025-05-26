@@ -18,7 +18,7 @@ local Config = {
     DEFAULTS = {
         SOUND_CHANNEL = "Master",
         SOUND_VOLUME = 0.7,
-        LOOT_SOUND = "TREASURE"
+        LOOT_SOUND = "TREASURE",
         DEBUG_MODE =  false
     }
 }
