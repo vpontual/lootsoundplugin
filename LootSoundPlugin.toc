@@ -1,8 +1,8 @@
-## Interface: 110002, 40400, 30403
+## Interface: 110002, 40400, 11503
 ## Title: LootSoundPlugin
 ## Notes: It's not junk, it's treasure!
 ## Author: VeePee
-## Version: 2.0.0
+## Version: 2.1.0
 ## DefaultState: Enabled
 ## SavedVariables: LootSoundDB
 
