@@ -1,7 +1,5 @@
--- LootSoundPlugin.lua - Final Version with Corrected Trade Logic and Sound API
-
 local addonName, addon = ...
-addon.version = "2.0.0"
+addon.version = "2.1.0"
 
 -- Configuration
 local Config = {
@@ -112,8 +110,7 @@ EventManager:RegisterEvent("PLAYER_LOGIN")
 EventManager:RegisterEvent("LOOT_OPENED")
 EventManager:RegisterEvent("MERCHANT_SHOW")
 EventManager:RegisterEvent("MERCHANT_CLOSED")
-EventManager:RegisterEvent("TRADE_SHOW")
-EventManager:RegisterEvent("TRADE_UPDATE")
+EventManager:RegisterEvent("TRADE_ACCEPT_UPDATE")
 EventManager:RegisterEvent("TRADE_CLOSED")
 
 
@@ -135,6 +132,8 @@ EventManager:SetScript("OnEvent", function(self, event, ...)
         State.isEnabled = LootSoundDB.isEnabled
         State.sounds = LootSoundDB.sounds
         State.isDebug = LootSoundDB.isDebug
+
+        addon.tradeAcceptedByBoth = false
 
         if State.isEnabled then
             Utils.printMessage(string.format("Addon v%s loaded! Type /lootsound help for commands.", addon.version))
@@ -164,27 +163,20 @@ EventManager:SetScript("OnEvent", function(self, event, ...)
     elseif event == "MERCHANT_CLOSED" then
         Utils.debugPrint("Merchant window closed.")
 
-    elseif event == "TRADE_SHOW" then
-        addon.tradeAcceptedByBoth = false 
-        Utils.debugPrint("Trade window opened, waiting for accept.")
-
-    elseif event == "TRADE_UPDATE" then
-        if GetTradePlayerInput and GetTradeTargetInput then 
-            if GetTradePlayerInput() == 1 and GetTradeTargetInput() == 1 then
-                addon.tradeAcceptedByBoth = true
-                Utils.debugPrint("Both parties have accepted the trade.")
-            else
-                addon.tradeAcceptedByBoth = false
-            end
+    elseif event == "TRADE_ACCEPT_UPDATE" then
+        local playerAccepted, targetAccepted = ...
+        Utils.debugPrint("Trade accpet status updated:", "Player:", playerAccepted, "Target:", targetAccepted)
+        if playerAccpeted == 1 and targetAccepted == 1 then
+            addon.tradeAcceptedByBoth = true
+            Utils.debugPrint("Both parties have accepted the trade.")
         else
-            Utils.debugPrint("Trade API functions (GetTradePlayerInput/GetTradeTargetInput) not available.")
+            addon.tradeAcceptedByBoth = false
         end
     
     elseif event == "TRADE_CLOSED" then
         if addon.tradeAcceptedByBoth then
             Utils.debugPrint("Trade successful, playing sound.")
             if State.sounds.trade then
-                -- Corrected API call
                 PlaySoundFile(Config.SOUND_PATHS.TRADE, State.currentChannel, nil, State.currentVolume)
             end
         else
