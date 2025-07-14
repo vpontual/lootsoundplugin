@@ -165,7 +165,7 @@ EventManager:SetScript("OnEvent", function(self, event, ...)
 
     elseif event == "TRADE_ACCEPT_UPDATE" then
         local playerAccepted, targetAccepted = ...
-        Utils.debugPrint("Trade accpet status updated:", "Player:", playerAccepted, "Target:", targetAccepted)
+        Utils.debugPrint("Trade accept status updated:", "Player:", playerAccepted, "Target:", targetAccepted)
         if playerAccpeted == 1 and targetAccepted == 1 then
             addon.tradeAcceptedByBoth = true
             Utils.debugPrint("Both parties have accepted the trade.")
