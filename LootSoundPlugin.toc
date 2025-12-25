@@ -1,5 +1,6 @@
 ## Interface: 110207, 50503, 11508
 ## Title: LootSoundPlugin
+## X-Curse-Project-ID: 1125208
 ## Notes: It's not junk, it's treasure!
 ## Author: VeePee
 ## Version: 2.1.0

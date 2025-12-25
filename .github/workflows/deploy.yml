@@ -1,26 +1,22 @@
-name: Upload to CurseForge
+name: Packager
 
 on:
   push:
     branches:
-      - main  # This triggers the script whenever you push to main
+      - main
+    tags:
+      - '*'
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      CF_API_KEY: ${{ secrets.CURSEFORGE_TOKEN }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Create Addon Zip
-        run: git archive --format=zip --output=lootsoundplugin.zip --prefix=LootSoundPlugin/ HEAD
-
-      - name: Package and Upload to CurseForge
-        uses: Cursereloaded/curseforge-upload@v1
         with:
-          token: ${{ secrets.CURSEFORGE_TOKEN }}
-          project_id: '1125208'  # Replace with your actual Project ID
-          game_version: '11.2.7, 5.5.3, 1.15.8' # Retail, MoP Classic, Classic Era
-          file_path: './lootsoundplugin.zip' # The path to your file
-          release_type: 'release' # Can be 'release', 'beta', or 'alpha'
-          changelog: 'Automatically updated from GitHub push.'
+          fetch-depth: 0 # Required for changelog generation
+
+      - name: Package and Upload
+        uses: BigWigsMods/packager@v2
