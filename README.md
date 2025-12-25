@@ -27,19 +27,54 @@ The addon works automatically once installed. It will play sounds when you:
 - Sell items to a vendor
 - Initiate a trade with another player
 
+### Settings Panel
+
+Access all settings via the in-game interface:
+
+1. Press ESC
+2. Go to Interface > AddOns > LootSound
+3. Configure all settings with a user-friendly UI:
+   - Enable/disable the addon
+   - Adjust volume (0-100%)
+   - Choose sound channel (Master or SFX)
+   - Select loot sound (Treasure or Wow)
+   - Toggle individual sound types (loot, vendor, trade)
+   - Enable debug mode
+   - Test all sounds
+
 ### Slash Commands
 
-You can customize the addon's behavior using the following slash commands:
+You can also customize the addon using slash commands:
 
+- Get help: `/lootsound help`
+- Open settings panel: `/lootsound config`
 - Set the volume: `/lootsound volume <0.0 to 1.0>`
-- Set the loot sound: `/lootsound loot <wow|treasure>`
+- Set the sound channel: `/lootsound channel <master|sfx>`
+- Set the loot sound: `/lootsound sound <wow|treasure>`
+- Enable/disable addon: `/lootsound toggle`
+- Toggle sound types: `/lootsound loot`, `/lootsound vendor`, `/lootsound trade`
+- Test sounds: `/lootsound test`
+- Show current settings: `/lootsound status`
+- Toggle debug mode: `/lootsound debug`
+- Reset to defaults: `/lootsound reset`
 
 Examples:
 
 ```
+/lootsound config
 /lootsound volume 0.5
-/lootsound loot wow
+/lootsound sound wow
+/lootsound channel sfx
+/lootsound test
+/lootsound reset
 ```
+
+### Default Settings
+
+- Volume: 50% (0.5)
+- Channel: Master
+- Loot sound: Treasure
+- All sound types enabled (loot, vendor, trade)
 
 ## Customization
 
