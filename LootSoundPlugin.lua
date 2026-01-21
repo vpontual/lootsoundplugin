@@ -38,8 +38,9 @@ local State = {
     }
 }
 
--- Forward declaration for settings panel (defined at end of file)
-local RegisterSettingsPanel
+-- Forward declarations
+local RegisterSettingsPanel  -- Settings panel (defined at end of file)
+local SoundManager           -- Sound handling (self-referential)
 
 -- Utility functions
 local Utils = {
@@ -64,7 +65,7 @@ local Utils = {
 }
 
 -- Sound handling
-local SoundManager = {
+SoundManager = {
     activeSounds = {},
 
     -- Helper to play sound with volume control
