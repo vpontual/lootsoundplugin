@@ -38,6 +38,9 @@ local State = {
     }
 }
 
+-- Forward declaration for settings panel (defined at end of file)
+local RegisterSettingsPanel
+
 -- Utility functions
 local Utils = {
     printMessage = function(msg, isError)
@@ -416,7 +419,7 @@ SLASH_LOOTSOUND1 = "/lootsound"
 SlashCmdList["LOOTSOUND"] = HandleSlashCommands
 
 -- Settings Panel
-local function RegisterSettingsPanel()
+RegisterSettingsPanel = function()
     -- 1. Create the Panel Frame
     local panel = CreateFrame("Frame", "LootSoundSettingsPanel")
     panel.name = "LootSound"
