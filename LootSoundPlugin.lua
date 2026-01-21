@@ -1,5 +1,5 @@
 local addonName, addon = ...
-addon.version = "2.1.0"
+addon.version = "2.2.0"
 
 -- Configuration
 local Config = {

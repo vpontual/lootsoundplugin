@@ -126,3 +126,7 @@ SOFTWARE.
 Created by veepee
 
 Some game files were sourced from [WOWHEAD](www.wowhead.com)
+
+---
+
+*This project was developed with AI assistance.*
